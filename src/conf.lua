@@ -1,8 +1,8 @@
 function love.conf(t)
-	t.identity = "RGB"
+	t.identity = "rgb"
 	t.version = "0.9.1"
 	--t.author = "Guard13007"
-	t.console = true
+	--t.console = true
 
 	t.window = {}
 	t.window.title = "RGB - The Color Chooser"

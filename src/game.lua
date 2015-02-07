@@ -49,7 +49,6 @@ local function copyColor(A)
 end
 
 function game:update(dt)
-	print(os.time())
 	-- check if level complete
 	local coloredBoxes = {}
 	for i=0,#boxes do
@@ -111,7 +110,6 @@ function game:draw()
 end
 
 function game:mousepressed(x, y, button)
-	print(button) --debug
 	local nx = math.floor(x / boxSize)
 	local ny = math.floor((y - boxSize * 2) / boxSize)
 	if boxes[nx][ny] then
