@@ -1,4 +1,5 @@
 !builds/
 builds/*
 !builds/build.number
+!builds/custom_exes/
 tmp/
