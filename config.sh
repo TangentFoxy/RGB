@@ -31,6 +31,13 @@ osx10Dir="$outputDir/osx10src"
 win32exe="$outputDir/custom_exes/rgb32.exe"
 win64exe="$outputDir/custom_exes/rgb64.exe"
 
+# Mac icns files for package icon
+# (It's best to just specify the same file for both.
+# I don't think both are needed, but I am not very familiar with the Mac system.)
+osxIconsDirectory="$(pwd)/icons"
+osxFileIcon="icon.icns"
+osxBundleIcon="icon.icns"
+
 # Remove old packages?
 removeOld=false
 
