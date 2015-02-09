@@ -26,6 +26,11 @@ win32Dir="$outputDir/win32src"
 win64Dir="$outputDir/win64src"
 osx10Dir="$outputDir/osx10src"
 
+# Modified love executables (optional)
+# (The default values are where the default exe's will be extracted)
+win32exe="$outputDir/custom_exes/rgb32.exe"
+win64exe="$outputDir/custom_exes/rgb64.exe"
+
 # Remove old packages?
 removeOld=false
 
