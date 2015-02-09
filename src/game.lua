@@ -1,34 +1,42 @@
 love.math.setRandomSeed(os.time())
 
-local Gamestate = require "lib.gamestate"
+-- Gamestates
+--local won = require "won" --TODO MAKE THIS
+local lost = require "lost"
 
+-- This Gamestate
 local game = {}
 
+-- Locals
 local boxes = {}
-local boxSize = 20
-local wAmount = math.floor(love.graphics.getWidth() / boxSize) - 1
-local hAmount = math.floor(love.graphics.getHeight() / boxSize) - 5
-
-local level = 0
-local score = 0
-local totalScore = 0
-local time = 0
-local colorStep = 80 -- difficulty setting
+local score, totalScore = 0, 0
+local level, time, startingTime = 0, 0, 0
+local previousState
+--these are defined on each entry to this gamestate
+local screenWidth, screenHeight              --defines where things are rendered
+local boxColumns, boxRows                    --defines how many boxes
+--these are loaded from values passed on entry to this gamestate
+--TODO ACTUALLY HAVE THESE LOAD INSTEAD OF DEFINE HERE
+local boxSize, colorStep, timeLimit = 20, 80, 10--60
 
 local function nextLevel()
 	totalScore = totalScore + score
-	level = level + 1
 	score = 0
-	time = 0
+	level = level + 1
+	time = time + timeLimit --your remaining time is added on to the next level
+	startingTime = time     --save where you started on this level for scoring
 
-	-- initial black boxes
-	for i=0,wAmount do
+	-- (re)create black boxes
+	boxes = {}
+	for i=0,boxColumns do
 		boxes[i] = {}
-		for j=0,hAmount do
+		for j=0,boxRows do
 			boxes[i][j] = {0, 0, 0}
 		end
 	end
-	for i=1,math.floor(level * 1.2 + 2) do
+
+	-- assign a random set of boxes random colors
+	for i=1,math.floor(level * 1.5 + 2) do
 		local x, y = love.math.random(0, #boxes), love.math.random(0, #boxes[1])
 		boxes[x][y] = {love.math.random(0, 255), love.math.random(0, 255), love.math.random(0, 255)}
 		boxes[x][y][1] = boxes[x][y][1] - boxes[x][y][1] % colorStep --is this right?
@@ -37,7 +45,7 @@ local function nextLevel()
 	end
 end
 
-local function equalColor(A, B)
+local function colorsEqual(A, B)
 	if A[1] == B[1] and A[2] == B[2] and A[3] == B[3] then
 		return true
 	end
@@ -48,12 +56,35 @@ local function copyColor(A)
 	return {A[1], A[2], A[3]}
 end
 
+function game:enter(previous, settings)
+	-- save the state we came from
+	previousState = previous
+	-- set locals based on screen size
+	screenWidth = love.graphics.getWidth()
+	screenHeight = love.graphics.getHeight()
+	boxColumns = math.floor(screenWidth / boxSize) - 1
+	boxRows = math.floor(screenHeight / boxSize) - 5
+	-- set how to play the game based on settings
+	boxSize = settings.boxSize
+	colorStep = settings.colorStep
+	timeLimit = settings.timeLimit
+	-- set the font we're going to use
+	love.graphics.setNewFont(28)
+	-- this is nextLevel shit
+	nextLevel()
+end
+
+function game:resume(previous)
+	game:enter(previousState) --we want to keep the old values
+	totalScore = 0            --this should have happened in game:leave() but does not for an unknown reason
+end
+
 function game:update(dt)
 	-- check if level complete
 	local coloredBoxes = {}
 	for i=0,#boxes do
 		for j=0,#boxes[i] do
-			if not equalColor(boxes[i][j], {0, 0, 0}) then
+			if not colorsEqual(boxes[i][j], {0, 0, 0}) then
 				table.insert(coloredBoxes, boxes[i][j])
 			end
 		end
@@ -63,19 +94,27 @@ function game:update(dt)
 		won = true
 		color = copyColor(coloredBoxes[1])
 		for i=2,#coloredBoxes do
-			if not equalColor(color, coloredBoxes[i]) then
+			if not colorsEqual(color, coloredBoxes[i]) then
 				won = false
 			end
 		end
 	end
 	if won then
+		-- TODO we need a brief push/pop of gamestate to display a winning message
 		nextLevel()
 	end
 
-	-- else increment time
-	time = time + dt
+	-- else decrement time, and check if out of time
+	time = time - dt
+	if time <= 0 then
+		-- TODO we need to pass an image of the screen and data about time of losing
+		Gamestate.push(lost, love.graphics.newScreenshot())
+		-- call leave to clean up the gamestate
+		game:leave()
+	end
 
-	score = #coloredBoxes / math.pow(time, 0.02) * colorStep --difficulty
+	-- update the current score
+	score = #coloredBoxes / math.pow(startingTime - time, 0.02) * colorStep
 end
 
 function game:draw()
@@ -90,39 +129,47 @@ function game:draw()
 	--lines
 	-- vertical
 	love.graphics.setColor(255, 255, 255)
-	for i=0,wAmount+1 do
-		love.graphics.line(i * boxSize, 0 + boxSize * 2, i * boxSize, love.graphics.getHeight() - boxSize * 2)
+	for i=0,boxColumns+1 do
+		love.graphics.line(i * boxSize, 0 + boxSize * 2, i * boxSize, screenHeight - boxSize * 2)
 
 	end
 	-- horizontal
-	for j=0,hAmount+1 do
-		love.graphics.line(0, j * boxSize + boxSize * 2, love.graphics.getWidth(), j * boxSize + boxSize * 2)
+	for j=0,boxRows+1 do
+		love.graphics.line(0, j * boxSize + boxSize * 2, screenWidth, j * boxSize + boxSize * 2)
 	end
 
-	--time elapsed
-	love.graphics.setNewFont(28)
+	-- Info Overlays
+	--love.graphics.setNewFont(28) --purposely stays same no matter screen res
 	love.graphics.setColor(255, 255, 255)
-	love.graphics.printf(string.format("Total Score: %.1f", totalScore), 0, 3, 400, "center")
-	--love.graphics.printf(string.format("Best Score: %.1f", bestScore), 400, 3, 400, "center")
-	love.graphics.printf(string.format("Time: %.1f", time), 0, 425, 400, "center")
-	love.graphics.printf(string.format("Level: %i", level), 0, 425, 800, "center")
-	love.graphics.printf(string.format("Score: %.1f", score), 400, 425, 400, "center")
+	-- top of screen stuff
+	love.graphics.printf(string.format("Total Score: %.1f", totalScore), 0, 3, screenWidth / 2, "center")
+	--love.graphics.printf(string.format("Best Score: %.1f", bestScore), screenWidth / 2, 3, screenWidth / 2, "center")
+
+	-- bottom of screen stuff
+	love.graphics.printf(string.format("Time: %.1f", time), 0, screenWidth / 2 + 25, screenWidth / 2, "center")
+	love.graphics.printf("Level: "..level, 0, screenWidth / 2 + 25, screenWidth, "center")
+	love.graphics.printf(string.format("Current Score: %.1f", score), screenWidth / 2, screenWidth / 2 + 25, screenWidth / 2, "center")
 end
 
 function game:mousepressed(x, y, button)
+	-- new x/y adjusted for where boxes actually are
 	local nx = math.floor(x / boxSize)
 	local ny = math.floor((y - boxSize * 2) / boxSize)
+	-- check if we are actually over a box first
 	if boxes[nx][ny] then
+		-- left, red
 		if button == "l" then
 			boxes[nx][ny][1] = boxes[nx][ny][1] + colorStep
 			if boxes[nx][ny][1] > 255 then
 				boxes[nx][ny][1] = 0
 			end
+		-- middle, green
 		elseif button == "m" or button == "wu" or button == "wd" then
 			boxes[nx][ny][2] = boxes[nx][ny][2] + colorStep
 			if boxes[nx][ny][2] > 255 then
 				boxes[nx][ny][2] = 0
 			end
+		-- right, blue
 		elseif button == "r" then
 			boxes[nx][ny][3] = boxes[nx][ny][3] + colorStep
 			if boxes[nx][ny][3] > 255 then
@@ -132,13 +179,8 @@ function game:mousepressed(x, y, button)
 	end
 end
 
-local menuState
-function game:enter(previous)
-	menuState = previous
-	nextLevel()
-end
-
 function game:leave()
+	--double check the correctness of this
 	level = 0
 	score = 0
 	totalScore = 0
@@ -147,8 +189,7 @@ end
 
 function game:keypressed(key, unicode)
 	if key == "escape" then
-		--love.event.quit()
-		Gamestate.switch(menuState)
+		Gamestate.switch(previousState)
 	end
 end
 
