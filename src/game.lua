@@ -11,13 +11,12 @@ local game = {}
 local boxes = {}
 local score, totalScore = 0, 0
 local level, time, startingTime = 0, 0, 0
-local previousState
+local previousState, gameSettings
 --these are defined on each entry to this gamestate
 local screenWidth, screenHeight              --defines where things are rendered
 local boxColumns, boxRows                    --defines how many boxes
 --these are loaded from values passed on entry to this gamestate
---TODO ACTUALLY HAVE THESE LOAD INSTEAD OF DEFINE HERE
-local boxSize, colorStep, timeLimit = 20, 80, 10--60
+local boxSize, colorStep, timeLimit = 20, 80, 60 --default values just in case
 
 local function nextLevel()
 	totalScore = totalScore + score
@@ -36,7 +35,7 @@ local function nextLevel()
 	end
 
 	-- assign a random set of boxes random colors
-	for i=1,math.floor(level * 1.5 + 2) do
+	for i=1,math.floor(math.pow(level, 1.07) * 1.03 + 2) do --(level * 1.5 + 2)
 		local x, y = love.math.random(0, #boxes), love.math.random(0, #boxes[1])
 		boxes[x][y] = {love.math.random(0, 255), love.math.random(0, 255), love.math.random(0, 255)}
 		boxes[x][y][1] = boxes[x][y][1] - boxes[x][y][1] % colorStep --is this right?
@@ -64,10 +63,12 @@ function game:enter(previous, settings)
 	screenHeight = love.graphics.getHeight()
 	boxColumns = math.floor(screenWidth / boxSize) - 1
 	boxRows = math.floor(screenHeight / boxSize) - 5
+	-- save the settings for later use
+	gameSettings = settings or gameSettings
 	-- set how to play the game based on settings
-	boxSize = settings.boxSize
-	colorStep = settings.colorStep
-	timeLimit = settings.timeLimit
+	boxSize = gameSettings.boxSize
+	colorStep = gameSettings.colorStep
+	timeLimit = gameSettings.timeLimit
 	-- set the font we're going to use
 	love.graphics.setNewFont(28)
 	-- this is nextLevel shit
@@ -108,7 +109,7 @@ function game:update(dt)
 	time = time - dt
 	if time <= 0 then
 		-- TODO we need to pass an image of the screen and data about time of losing
-		Gamestate.push(lost, love.graphics.newScreenshot())
+		Gamestate.push(lost, love.graphics.newScreenshot(), totalScore + score)
 		-- call leave to clean up the gamestate
 		game:leave()
 	end
@@ -185,6 +186,7 @@ function game:leave()
 	score = 0
 	totalScore = 0
 	time = 0
+	startingTime = 0
 end
 
 function game:keypressed(key, unicode)
