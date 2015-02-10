@@ -24,7 +24,7 @@ end
 function menu:mousepressed(x, y, button)
 	if button == "l" then
 		-- TODO replace constructed settings object with actual loaded settings
-		Gamestate.switch(game, {boxSize = 20, colorStep = 80, timeLimit = 10})
+		Gamestate.switch(game, {boxSize = 20, colorStep = 80, timeLimit = 60})
 	end
 end
 
