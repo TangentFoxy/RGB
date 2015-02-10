@@ -1,4 +1,5 @@
 Gamestate = require "lib.gamestate"
+Gamejolt = require "gamejolt"
 
 local menu = require "menu"
 
