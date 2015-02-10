@@ -1,8 +1,9 @@
 love.math.setRandomSeed(os.time())
 
 -- Gamestates
---local won = require "won" --TODO MAKE THIS
-local lost = require "lost"
+--local won = require "gamestates.won" --TODO MAKE THIS
+local lost = require "gamestates.lost"
+local paused = require "gamestates.paused"
 
 -- This Gamestate
 local game = {}
@@ -75,9 +76,14 @@ function game:enter(previous, settings)
 	nextLevel()
 end
 
-function game:resume(previous)
-	game:enter(previousState) --we want to keep the old values
-	totalScore = 0            --this should have happened in game:leave() but does not for an unknown reason
+function game:resume(previous, action)
+	if action == "LOST" then
+		game:enter(previousState) --we want to keep the old values
+		totalScore = 0            --this should have happened in game:leave() but does not for an unknown reason
+	end
+	if action == "UNPAUSED" then
+		love.graphics.setNewFont(28) -- fix our font!
+	end
 end
 
 function game:update(dt)
@@ -190,8 +196,16 @@ function game:leave()
 end
 
 function game:keypressed(key, unicode)
-	if key == "escape" then
+	if key == " " then
+		Gamestate.push(paused, love.graphics.newScreenshot())
+	elseif key == "escape" then
 		Gamestate.switch(previousState)
+	end
+end
+
+function game:focus(isFocused)
+	if not isFocused then
+		Gamestate.push(paused, love.graphics.newScreenshot())
 	end
 end
 

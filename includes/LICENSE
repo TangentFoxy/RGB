@@ -3,6 +3,8 @@ RGB is Copyright (c) 2015 Paul Liverman III
 RGB uses the following libraries:
 
 - HUMP Gamestate, Copyright (c) 2010-2013 Matthias Richter
+- GameJolt.lua, Copyright (c) 2015 insweater
+- inifile, Copyright (c) 2011-2015 Bart van Strien
 
 All of these libraries and RGB itself are licensed under the MIT License:
 

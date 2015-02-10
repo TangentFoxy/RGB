@@ -22,7 +22,7 @@ function lost:draw()
 	love.graphics.setNewFont(50)
 	love.graphics.printf(string.format("Final Score: %.1f", score), 0, love.graphics.getHeight() / 2 - 25, love.graphics.getWidth(), "center")
 	love.graphics.setNewFont(16)
-	love.graphics.printf("(Click to restart.)", 0, love.graphics.getHeight() * 3/4 - 8, love.graphics.getWidth(), "center")
+	love.graphics.printf("(Press Esc to restart.)", 0, love.graphics.getHeight() * 3/4 - 8, love.graphics.getWidth(), "center")
 	--[[
 	love.graphics.printf(string.format("Total Score: %.1f", totalScore), 0, 3, screenWidth / 2, "center")
 	--love.graphics.printf(string.format("Best Score: %.1f", bestScore), screenWidth / 2, 3, screenWidth / 2, "center")
@@ -34,10 +34,20 @@ function lost:draw()
 	]]
 end
 
+---[[
 function lost:mousepressed(x, y, button)
 	if button == "l" then
-		Gamestate.pop()
+		Gamestate.pop("LOST")
 		--Gamestate.switch(previousState)
+	end
+end
+--]]
+
+function lost:keypressed(key, unicode)
+	if key == " " then
+		Gamestate.pop("LOST")
+	elseif key == "escape" then
+		Gamestate.pop("LOST")
 	end
 end
 
