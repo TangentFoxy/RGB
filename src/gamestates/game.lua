@@ -86,10 +86,12 @@ end
 
 function game:resume(previous, action)
 	if action == "LOST" then
+		log("Game restarted.")
 		game:enter(previousState) --we want to keep the old values
 		totalScore = 0            --this should have happened in game:leave() but does not for an unknown reason
 	end
 	if action == "UNPAUSED" then
+		log("Game resumed.")
 		love.graphics.setNewFont(28) -- fix our font!
 	end
 end
@@ -115,6 +117,7 @@ function game:update(dt)
 		end
 	end
 	if won then
+		log("Level beat!")
 		-- TODO we need a brief push/pop of gamestate to display a winning message
 		nextLevel()
 	end
