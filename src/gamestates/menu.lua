@@ -1,11 +1,82 @@
+local ser = require "lib.ser"
+local input = require "util.input"
+
 local Gamestate = require "lib.gamestate"
 local game = require "gamestates.game"
 
 local menu = {}
 
 local screenWidth, screenHeight
+local settings, controls
+
+function menu:init()
+	log("Initializing menu...")
+	-- load or create settings
+	if love.filesystem.isFile("settings.ini") then
+		log("Loading settings (again)...")
+		settings = inifile.parse("settings.ini")
+	else
+		log("Creating settings...")
+		settings = {
+			display = {
+				width = love.graphics.getWidth(),
+				height = love.graphics.getHeight(),
+				fullscreen = false,
+				borderless = true,
+			},
+			gamejolt = {
+				username = false,
+				usertoken = false
+			},
+			sound = {
+				music = 0,
+				sfx = 0
+			},
+			difficulty = {
+				preset = "normal",
+				timeLimit = 60,
+				colorStep = 80,
+				boxSize = 20
+			}
+		}
+	end
+	-- load or create controls
+	if love.filesystem.isFile("controls.lua") then
+		log("Loading controls...")
+		controls = require "controls"
+	else
+		log("Creating controls...")
+		controls = {
+			select = {
+				clicks = {"l"},
+				buttons = {}
+			},
+			back = {
+				clicks = {},
+				buttons = {"escape"}
+			},
+			pause = {
+				clicks = {},
+				buttons = {" ", "escape"}
+			},
+			red = {
+				clicks = {"l"},
+				buttons = {}
+			},
+			green = {
+				clicks = {"wd", "wu", "m"},
+				buttons = {}
+			},
+			blue = {
+				clicks = {"r"},
+				buttons = {}
+			}
+		}
+	end
+end
 
 function menu:enter()
+	log("Entering menu...")
 	screenWidth = love.graphics.getWidth()
 	screenHeight = love.graphics.getHeight()
 end
@@ -22,14 +93,14 @@ function menu:draw()
 end
 
 function menu:mousepressed(x, y, button)
-	if button == "l" then
-		-- TODO replace constructed settings object with actual loaded settings
-		Gamestate.switch(game, {boxSize = 20, colorStep = 80, timeLimit = 10})
+	if input(button, controls.select) then
+		Gamestate.switch(game, {boxSize = settings.difficulty.boxSize, colorStep = settings.difficulty.colorStep, timeLimit = settings.difficulty.timeLimit}, controls)
 	end
 end
 
 function menu:keypressed(key, unicode)
-	if key == "escape" then
+	if input(key, controls.back) then
+		log("Quitting.")
 		love.event.quit()
 	end
 end

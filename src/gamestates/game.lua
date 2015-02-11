@@ -1,5 +1,7 @@
 love.math.setRandomSeed(os.time())
 
+local input = require "util.input"
+
 -- Gamestates
 --local won = require "gamestates.won" --TODO MAKE THIS
 local lost = require "gamestates.lost"
@@ -12,7 +14,7 @@ local game = {}
 local boxes = {}
 local score, totalScore = 0, 0
 local level, time, startingTime = 0, 0, 0
-local previousState, gameSettings
+local previousState, gameSettings, controls
 --these are defined on each entry to this gamestate
 local screenWidth, screenHeight              --defines where things are rendered
 local boxColumns, boxRows                    --defines how many boxes
@@ -20,6 +22,8 @@ local boxColumns, boxRows                    --defines how many boxes
 local boxSize, colorStep, timeLimit = 20, 80, 60 --default values just in case
 
 local function nextLevel()
+	log("Creating the next level!")
+
 	totalScore = totalScore + score
 	score = 0
 	level = level + 1
@@ -43,6 +47,8 @@ local function nextLevel()
 		boxes[x][y][2] = boxes[x][y][2] - boxes[x][y][2] % colorStep
 		boxes[x][y][3] = boxes[x][y][3] - boxes[x][y][3] % colorStep
 	end
+
+	log("Done!")
 end
 
 local function colorsEqual(A, B)
@@ -56,7 +62,8 @@ local function copyColor(A)
 	return {A[1], A[2], A[3]}
 end
 
-function game:enter(previous, settings)
+function game:enter(previous, settings, gameControls)
+	log("Entering game...")
 	-- save the state we came from
 	previousState = previous
 	-- set locals based on screen size
@@ -66,6 +73,7 @@ function game:enter(previous, settings)
 	boxRows = math.floor(screenHeight / boxSize) - 5
 	-- save the settings for later use
 	gameSettings = settings or gameSettings
+	controls = gameControls or controls
 	-- set how to play the game based on settings
 	boxSize = gameSettings.boxSize
 	colorStep = gameSettings.colorStep
@@ -165,24 +173,38 @@ function game:mousepressed(x, y, button)
 	-- check if we are actually over a box first
 	if boxes[nx][ny] then
 		-- left, red
-		if button == "l" then
+		if input(button, controls.red) then
 			boxes[nx][ny][1] = boxes[nx][ny][1] + colorStep
 			if boxes[nx][ny][1] > 255 then
 				boxes[nx][ny][1] = 0
 			end
 		-- middle, green
-		elseif button == "m" or button == "wu" or button == "wd" then
+		elseif input(button, controls.green) then
 			boxes[nx][ny][2] = boxes[nx][ny][2] + colorStep
 			if boxes[nx][ny][2] > 255 then
 				boxes[nx][ny][2] = 0
 			end
 		-- right, blue
-		elseif button == "r" then
+		elseif input(button, controls.blue) then
 			boxes[nx][ny][3] = boxes[nx][ny][3] + colorStep
 			if boxes[nx][ny][3] > 255 then
 				boxes[nx][ny][3] = 0
 			end
 		end
+	end
+end
+
+function game:keypressed(key, unicode)
+	if input(key, controls.back) then
+		Gamestate.switch(previousState)
+	elseif input(key, controls.pause) then
+		Gamestate.push(paused, love.graphics.newScreenshot())
+	end
+end
+
+function game:focus(isFocused)
+	if not isFocused then
+		Gamestate.push(paused, love.graphics.newScreenshot())
 	end
 end
 
@@ -193,20 +215,6 @@ function game:leave()
 	totalScore = 0
 	time = 0
 	startingTime = 0
-end
-
-function game:keypressed(key, unicode)
-	if key == " " then
-		Gamestate.push(paused, love.graphics.newScreenshot())
-	elseif key == "escape" then
-		Gamestate.switch(previousState)
-	end
-end
-
-function game:focus(isFocused)
-	if not isFocused then
-		Gamestate.push(paused, love.graphics.newScreenshot())
-	end
 end
 
 return game

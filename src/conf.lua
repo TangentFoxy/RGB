@@ -1,8 +1,10 @@
+local debug = true
+
 function love.conf(t)
 	t.identity = "rgb"
 	t.version = "0.9.1"
 	--t.author = "Guard13007"
-	--t.console = true
+	if debug then t.console = true end
 
 	t.window = {}
 	t.window.title = "RGB - The Color Chooser"
@@ -16,3 +18,5 @@ function love.conf(t)
 	t.modules.joystick = false
 	t.modules.physics = false
 end
+
+return debug
