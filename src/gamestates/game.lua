@@ -15,6 +15,7 @@ local boxes = {}
 local score, totalScore = 0, 0
 local level, time, startingTime = 0, 0, 0
 local previousState, gameSettings, controls
+local pingTimer, session = 0, false
 --these are defined on each entry to this gamestate
 local screenWidth, screenHeight              --defines where things are rendered
 local boxColumns, boxRows                    --defines how many boxes
@@ -62,7 +63,7 @@ local function copyColor(A)
 	return {A[1], A[2], A[3]}
 end
 
-function game:enter(previous, settings, gameControls)
+function game:enter(previous, settings, gameControls, gamejoltSession)
 	log("Entering game...")
 	-- save the state we came from
 	previousState = previous
@@ -74,6 +75,14 @@ function game:enter(previous, settings, gameControls)
 	-- save the settings for later use
 	gameSettings = settings or gameSettings
 	controls = gameControls or controls
+	session = gamejoltSession
+	-- ping our active state immediately
+	if session then
+		local pingSuccess = Gamejolt.pingSession(true)
+		if not pingSuccess then
+			log("Couldn't ping Game Jolt session. Session may close.")
+		end
+	end
 	-- set how to play the game based on settings
 	boxSize = gameSettings.boxSize
 	colorStep = gameSettings.colorStep
@@ -97,6 +106,18 @@ function game:resume(previous, action)
 end
 
 function game:update(dt)
+	-- ping every 30 seconds if we are in a session
+	pingTimer = pingTimer + dt
+	if pingTimer >= 30 then
+		if session then
+			local pingSuccess = Gamejolt.pingSession(true)
+			if not pingSuccess then
+				log("Couldn't ping Game Jolt session. Session may close.") --this is lazy but I don't care
+			end
+		end
+		pingTimer = pingTimer - 30
+	end
+
 	-- check if level complete
 	local coloredBoxes = {}
 	for i=0,#boxes do
@@ -126,7 +147,7 @@ function game:update(dt)
 	time = time - dt
 	if time <= 0 then
 		-- TODO we need to pass an image of the screen and data about time of losing
-		Gamestate.push(lost, love.graphics.newScreenshot(), totalScore + score)
+		Gamestate.push(lost, love.graphics.newScreenshot(), totalScore + score, controls, session)
 		-- call leave to clean up the gamestate
 		game:leave()
 	end
@@ -199,20 +220,21 @@ end
 
 function game:keypressed(key, unicode)
 	if input(key, controls.back) then
+		log("Leaving game...")
 		Gamestate.switch(previousState)
 	elseif input(key, controls.pause) then
-		Gamestate.push(paused, love.graphics.newScreenshot())
+		Gamestate.push(paused, love.graphics.newScreenshot(), controls, session)
 	end
 end
 
 function game:focus(isFocused)
 	if not isFocused then
-		Gamestate.push(paused, love.graphics.newScreenshot())
+		Gamestate.push(paused, love.graphics.newScreenshot(), controls, session)
 	end
 end
 
 function game:leave()
-	--double check the correctness of this
+	-- clear the game upon any exit (except pause)
 	level = 0
 	score = 0
 	totalScore = 0
