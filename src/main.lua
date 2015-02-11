@@ -32,10 +32,12 @@ function love.load()
 				end
 				local sessionSuccess = Gamejolt.openSession() -- tell Game Jolt the user is playing
 				if sessionSuccess then
+					--[[ -- we don't ping immediately, also the menu DOES ping immediately
 					local idleSuccess = Gamejolt.pingSession(false)
 					if not idleSuccess then
 						log("Couldn't ping Gamejolt session. Session may close.") --this is lazy but I don't care
 					end
+					--]]
 					gamejoltSession = true
 				else
 					log("Couldn't open a session with Game Jolt.")

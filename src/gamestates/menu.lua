@@ -1,5 +1,6 @@
-local ser = require "lib.ser"
 local input = require "util.input"
+local inifile = require "lib.inifile"
+local ser = require "lib.ser"
 
 local Gamestate = require "lib.gamestate"
 local game = require "gamestates.game"
