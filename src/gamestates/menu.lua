@@ -9,7 +9,6 @@ local menu = {}
 
 local screenWidth, screenHeight
 local settings, controls
-local pingTimer, session = 0, false
 
 function menu:init()
 	log("Initializing menu...")
@@ -41,7 +40,6 @@ function menu:init()
 				boxSize = 20
 			}
 		}
-		-- TODO WRITE TO FILE
 	end
 	-- load or create controls
 	if love.filesystem.isFile("controls.lua") then
@@ -75,36 +73,13 @@ function menu:init()
 				buttons = {}
 			}
 		}
-		-- TODO WRITE THE CONTROLS TO FILE
 	end
 end
 
-function menu:enter(previous, gamejoltSession)
+function menu:enter()
 	log("Entering menu...")
-	session = gamejoltSession
-	-- ping our idle state immediately
-	if session then
-		local idleSuccess = Gamejolt.pingSession(false)
-		if not idleSuccess then
-			log("Couldn't ping Game Jolt session. Session may close.")
-		end
-	end
 	screenWidth = love.graphics.getWidth()
 	screenHeight = love.graphics.getHeight()
-end
-
-function menu:update(dt)
-	-- we want to ping every 30 seconds if connected
-	pingTimer = pingTimer + dt
-	if pingTimer >= 30 then
-		if session then
-			local idleSuccess = Gamejolt.pingSession(false)
-			if not idleSuccess then
-				log("Couldn't ping Game Jolt session. Session may close.") --this is lazy but I don't care
-			end
-		end
-		pingTimer = pingTimer - 30
-	end
 end
 
 function menu:draw()
@@ -127,9 +102,6 @@ end
 function menu:keypressed(key, unicode)
 	if input(key, controls.back) then
 		log("Quitting.")
-		if session then
-			Gamejolt.closeSession()
-		end
 		love.event.quit()
 	end
 end

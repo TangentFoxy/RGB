@@ -1,37 +1,10 @@
-local input = require "util.input"
-
 local paused = {}
 
-local previousState, screenshot, controls
-local pingTimer, session = 0, false
+local previousState, screenshot
 
-function paused:enter(previous, screenImageData, gameControls, gamejoltSession)
-	log("Game paused.")
+function paused:enter(previous, screenImageData)
 	previousState = previous
 	screenshot = love.graphics.newImage(screenImageData)
-	controls = gameControls
-	session = gamejoltSession
-	-- ping our idle state immediately
-	if session then
-		local idleSuccess = Gamejolt.pingSession(false)
-		if not idleSuccess then
-			log("Couldn't ping Game Jolt session. Session may close.")
-		end
-	end
-end
-
-function paused:update(dt)
-	-- ping every 30 seconds if in a session
-	pingTimer = pingTimer + dt
-	if pingTimer >= 30 then
-		if session then
-			local idleSuccess = Gamejolt.pingSession(false)
-			if not idleSuccess then
-				log("Couldn't ping Game Jolt session. Session may close.") --this is lazy but I don't care
-			end
-		end
-		pingTimer = pingTimer - 30
-	end
 end
 
 function paused:draw()
@@ -51,16 +24,16 @@ end
 
 ---[[
 function paused:mousepressed(x, y, button)
-	if input(button, controls.select) or input(button, controls.back) then
+	if button == "l" then
 		Gamestate.pop("UNPAUSED")
 	end
 end
 --]]
 
 function paused:keypressed(key, unicode)
-	if input(key, controls.pause) then
+	if key == " " then
 		Gamestate.pop("UNPAUSED")
-	elseif input(key, controls.back) then
+	elseif key == "escape" then
 		Gamestate.pop("UNPAUSED")
 	end
 end
