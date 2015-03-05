@@ -120,7 +120,7 @@ end
 
 function menu:mousepressed(x, y, button)
 	if input(button, controls.select) then
-		Gamestate.switch(game, difficulty, controls, session)
+		Gamestate.switch(game, {boxSize = settings.difficulty.boxSize, colorStep = settings.difficulty.colorStep, timeLimit = settings.difficulty.timeLimit}, controls)
 	end
 end
 

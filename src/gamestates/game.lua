@@ -73,10 +73,7 @@ function game:enter(previous, settings, gameControls, gamejoltSession)
 	boxColumns = math.floor(screenWidth / boxSize) - 1
 	boxRows = math.floor(screenHeight / boxSize) - 5
 	-- save the settings for later use
-	if settings then
-		gameSettings = settings
-	end
-	--gameSettings = settings or gameSettings
+	gameSettings = settings or gameSettings
 	controls = gameControls or controls
 	session = gamejoltSession
 	-- ping our active state immediately
