@@ -2,7 +2,7 @@ local debug = true
 
 function love.conf(t)
 	t.identity = "rgb"
-	t.version = "0.9.1"
+	--t.version = "0.9.1"
 	--t.author = "Guard13007"
 	if debug then t.console = true end
 
